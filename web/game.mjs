@@ -1,6 +1,11 @@
 import { levelAt, clamp, createRng } from './campaign.mjs';
 export const ARENA = Object.freeze({ left: -8, right: 8, back: -7, front: 2 });
 export function intersects(a,b,radius){return Math.hypot(a.x-b.x,a.z-b.z)<radius;}
+export function sweptHit(from,to,target,radius){
+  const dx=to.x-from.x,dz=to.z-from.z,length=dx*dx+dz*dz;
+  const t=length?clamp(((target.x-from.x)*dx+(target.z-from.z)*dz)/length,0,1):0;
+  return intersects({x:from.x+dx*t,z:from.z+dz*t},target,radius);
+}
 export class Game {
   constructor({seed,onEvent=()=>{}}={}){this.random=createRng(seed);this.onEvent=onEvent;this.best=0;this.unlocked=1;this.reset();this.state='menu';}
   reset(start=1){this.level=levelAt(start);this.state='playing';this.score=0;this.kills=0;this.combo=0;this.comboTimer=0;this.elapsed=0;this.shake=0;this.stageKills=0;this.stageDamage=0;this.stageStarted=0;this.id=0;this.bullets=[];this.enemies=[];this.pickups=[];this.particles=[];this.boss=null;this.player={x:0,z:-5,hull:100,shield:40,weapon:1,bank:0,invincible:2,dash:0,fire:0};this.enterLevel(start);}
@@ -29,10 +34,10 @@ export class Game {
     else if(this.level.boss&&!this.bossSpawned)this.spawnBoss();
     else if(!this.boss)this.clear();
     if(this.state!=='playing')return;
-    for(const e of this.enemies){e.age+=dt;e.z-=e.speed*dt;let amplitude=e.kind==='dart'?2.1:e.kind==='tank'?.4:1;e.x=clamp(e.originX+Math.sin(e.age*(e.kind==='dart'?2.4:1.4)+e.id)*amplitude,-8.5,8.5);e.fire-=dt;if(e.fire<=0&&e.z<16&&e.z>p.z+1){let aim=Math.atan2(p.x-e.x,e.z-p.z);this.enemyShot(e.x,e.z-.5,aim);if(e.kind==='tank'){this.enemyShot(e.x,e.z-.5,aim-.22);this.enemyShot(e.x,e.z-.5,aim+.22);}e.fire=this.level.fireInterval;}if(intersects(e,p,e.radius+.5)){this.damage(24);e.hp=0;}if(e.z<-9){e.hp=0;this.combo=0;}}
+    for(const e of this.enemies){e.age+=dt;e.z-=e.speed*dt;let amplitude=e.kind==='dart'?2.1:e.kind==='tank'?.4:1;e.x=clamp(e.originX+Math.sin(e.age*(e.kind==='dart'?2.4:1.4)+e.id)*amplitude,-8.5,8.5);e.fire-=dt;if(e.fire<=0&&e.z<16&&e.z>p.z+1){let aim=Math.atan2(p.x-e.x,e.z-p.z);this.enemyShot(e.x,e.z-.5,aim);if(e.kind==='tank'){this.enemyShot(e.x,e.z-.5,aim-.22);this.enemyShot(e.x,e.z-.5,aim+.22);}e.fire=this.level.fireInterval;}if(intersects(e,p,e.radius+.5)){this.damage(24);e.hp=0;}if(e.z<-9){e.hp=0;this.combo=0;this.damage(8);}}
     const boss=this.boss;
     if(boss){boss.age+=dt;boss.z=Math.max(11,boss.z-dt*2);boss.x=Math.sin(boss.age*(.5+this.level.number*.015))*5.2;boss.phase=boss.hp<=boss.maxHP*.5?2:1;boss.fire-=dt;if(boss.fire<=0){let count=5+Math.floor(this.level.number/5)*2+(boss.phase===2?4:0),aim=Math.atan2(p.x-boss.x,boss.z-p.z);for(let i=0;i<count;i++)this.enemyShot(boss.x,boss.z-1.8,aim+(i-(count-1)/2)*.105,this.level.bulletSpeed*(boss.phase===2?1.15:1));boss.attack++;if(boss.phase===2&&boss.attack%2===0){for(let side of [-1,1])this.enemyShot(boss.x+side*2.4,boss.z-1,aim+side*.3);}boss.fire=(boss.phase===2?.95:1.5)*Math.max(.65,1-this.level.number*.013);this.emit('bossShot');}}
-    for(const b of this.bullets){b.x+=b.vx*dt;b.z+=b.vz*dt;if(b.enemy){if(intersects(b,p,.58)){this.damage(b.damage);b.dead=true;}}else{for(const e of this.enemies){if(e.hp>0&&intersects(b,e,e.radius+.2)){e.hp-=b.damage;b.dead=true;if(e.hp<=0)this.kill(e);break;}}if(!b.dead&&boss&&intersects(b,boss,2.4)){boss.hp-=b.damage;b.dead=true;this.burst(b.x,b.z,[1,.6,.3],2);if(boss.hp<=0){this.kill(boss,true);this.boss=null;break;}}}}
+    for(const b of this.bullets){const from={x:b.x,z:b.z};b.x+=b.vx*dt;b.z+=b.vz*dt;if(b.enemy){if(sweptHit(from,b,p,.58)){this.damage(b.damage);b.dead=true;}}else{for(const e of this.enemies){if(e.hp>0&&sweptHit(from,b,e,e.radius+.2)){e.hp-=b.damage;b.dead=true;if(e.hp<=0)this.kill(e);break;}}if(!b.dead&&boss&&sweptHit(from,b,boss,2.4)){boss.hp-=b.damage;b.dead=true;this.burst(b.x,b.z,[1,.6,.3],2);if(boss.hp<=0){this.kill(boss,true);this.boss=null;break;}}}}
     this.enemies=this.enemies.filter(e=>e.hp>0);this.bullets=this.bullets.filter(b=>!b.dead&&b.z>-12&&b.z<32&&Math.abs(b.x)<16);
     for(const d of this.pickups){d.z-=dt*3;if(intersects(d,p,1)){if(d.kind==='repair')p.hull=clamp(p.hull+18,0,100);else p.shield=clamp(p.shield+22,0,60);d.dead=true;this.emit('pickup',{kind:d.kind});}}
     this.pickups=this.pickups.filter(d=>!d.dead&&d.z>-10);
