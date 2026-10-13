@@ -6,7 +6,7 @@ uniform mat4 uVP; uniform mat4 uModel; varying vec3 vNormal; varying vec3 vWorld
 void main(){vec4 p=uModel*vec4(aPosition,1.0);vWorld=p.xyz;vNormal=mat3(uModel)*aNormal;gl_Position=uVP*p;}`;
 const fragment = `precision mediump float;varying vec3 vNormal;varying vec3 vWorld;
 uniform vec3 uColor;uniform vec3 uFog;uniform float uGlow;uniform float uAlpha;
-void main(){vec3 n=normalize(vNormal);float light=.28+.62*max(dot(n,normalize(vec3(-.5,1.,-.6))),0.);float rim=pow(1.-abs(n.y),2.)*.25;
+void main(){vec3 n=normalize(vNormal);float light=.42+.58*max(dot(n,normalize(vec3(-.5,1.,-.6))),0.);float rim=pow(1.-abs(n.y),2.)*.25;
 vec3 c=uColor*(light+uGlow+rim);float f=clamp((vWorld.z-8.)/55.,0.,.7);gl_FragColor=vec4(mix(c,uFog,f),uAlpha);}`;
 const bgVertex = `attribute vec3 aPosition;varying vec2 vUV;void main(){vUV=aPosition.xy*.5+.5;gl_Position=vec4(aPosition,1.);}`;
 const bgFragment = `precision mediump float;varying vec2 vUV;uniform float uTime;uniform float uAspect;uniform vec3 uColor;uniform vec3 uFog;
@@ -160,13 +160,13 @@ function octa() {
   );
 }
 function ship() {
-  const nose = [0, 0, 1.6],
-    tail = [0, 0, -1],
-    top = [0, 0.42, -0.35],
-    bottom = [0, -0.18, -0.35],
-    left = [-1.35, -0.08, -0.9],
-    right = [1.35, -0.08, -0.9];
-  return triangles([
+  const nose = [0, 0, 1.7],
+    tail = [0, 0, -1.1],
+    top = [0, 0.48, -0.15],
+    bottom = [0, -0.2, -0.25],
+    left = [-0.36, 0, -0.8],
+    right = [0.36, 0, -0.8];
+  const faces = [
     [nose, left, top],
     [nose, top, right],
     [nose, bottom, left],
@@ -175,7 +175,24 @@ function ship() {
     [tail, right, top],
     [tail, left, bottom],
     [tail, bottom, right],
-  ]);
+  ];
+  for (const side of [-1, 1]) {
+    const root = [side * 0.25, 0, 0.5],
+      tip = [side * 1.35, -0.06, -0.45],
+      back = [side * 1.12, -0.1, -1.2],
+      inner = [side * 0.28, -0.02, -1];
+    faces.push(
+      [root, tip, back],
+      [root, back, inner],
+      [root, back, tip],
+      [root, inner, back],
+    );
+    const fin = [side * 0.5, 0.6, -1.05],
+      finBase = [side * 0.35, 0, -0.65],
+      finTail = [side * 0.7, 0, -1.2];
+    faces.push([fin, finBase, finTail], [fin, finTail, finBase]);
+  }
+  return triangles(faces);
 }
 function sphere() {
   let faces = [],
@@ -450,6 +467,42 @@ export class Renderer {
       let b = game.boss;
       const col = b.phase === 2 ? [1, 0.22, 0.32] : region.color;
       this.draw("octa", [b.x, 0.65, b.z], [2.7, 1, 2], col, time * 0.25, 0.1);
+      const titan = game.level.number / 5;
+      if (titan === 2)
+        for (const side of [-1, 1])
+          this.draw(
+            "cube",
+            [b.x + side * 3.4, 0.5, b.z + 1],
+            [0.25, 0.5, 2.1],
+            col,
+            side * 0.2,
+            0.2,
+          );
+      if (titan >= 3)
+        for (let i = 0; i < (titan === 4 ? 12 : 6); i++) {
+          const angle = (i * Math.PI * 2) / (titan === 4 ? 12 : 6) + time * 0.5;
+          this.draw(
+            "octa",
+            [
+              b.x + Math.cos(angle) * 3.8,
+              0.65 + Math.sin(angle) * 0.4,
+              b.z + Math.sin(angle) * 2.2,
+            ],
+            [0.4, 0.6, 0.4],
+            col,
+            angle,
+            0.5,
+          );
+        }
+      if (titan === 4)
+        this.draw(
+          "sphere",
+          [b.x, 0.6, b.z],
+          [1.65, 1.1, 1.65],
+          [0.17, 0.12, 0.15],
+          time * 0.1,
+        );
+
       for (let side of [-1, 1]) {
         this.draw(
           "ship",
