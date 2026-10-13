@@ -17,7 +17,7 @@ float cloud=pow(n,3.)*.5;vec3 c=uFog+uColor*cloud;vec2 s=p*180.;s.y+=uTime*.35;v
 float vignette=1.-.45*length(vUV-.5);gl_FragColor=vec4(c*vignette,1.);}`;
 function identity(){return new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);}
 function multiply(a,b){let o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)o[c*4+r]+=a[k*4+r]*b[c*4+k];return o;}
-const normalize=v=>{let l=Math.hypot(...v);return v.map(x=>x/l);};
+const normalize=v=>{let l=Math.hypot(...v)||1;return v.map(x=>x/l);};
 const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
 function lookAt(eye,target){let z=normalize(eye.map((x,i)=>x-target[i])),x=normalize(cross([0,1,0],z)),y=cross(z,x);let m=identity();[x,y,z].forEach((a,r)=>{for(let c=0;c<3;c++)m[c*4+r]=a[c];m[12+r]=-a.reduce((s,v,i)=>s+v*eye[i],0);});return m;}
 function perspective(aspect){let f=1/Math.tan(Math.PI/7),n=.1,far=160;return new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+n)/(n-far),-1,0,0,2*far*n/(n-far),0]);}
@@ -59,11 +59,11 @@ export class Renderer {
     for(let i=0;i<16;i++){let z=24-((time*4+i*3)%42);for(let x of [-9.3,9.3])this.draw('cube',[x,-.65,z],[.025,.025,.32],region.color,0,.5,.35);}
     const p=game.player;
     if(game.state!=='gameover'&&game.state!=='victory'){
-      let alpha=p.invincible>0&&Math.sin(time*32)>0?.35:1;
-      this.draw('ship',[p.x,.35,p.z],[.7,.7,.7],[.72,.83,.9],0,.1,alpha,-p.bank*.35);
-      this.draw('octa',[p.x,.62,p.z+.13],[.22,.12,.4],[.12,.83,1],0,1,alpha);
-      for(let x of [-.42,.42]){this.draw('cube',[p.x+x,.23,p.z-.7],[.1,.1,.24],[.07,.15,.2]);this.draw('octa',[p.x+x,.23,p.z-1.15],[.12,.12,.4+(Math.sin(time*45)*.09)],[.15,.75,1],0,1,.8);}
-      if(p.shield>0){gl.depthMask(false);this.draw('sphere',[p.x,.35,p.z],[1.1,.75,1.2],[.15,.7,1],0,.5,.11);gl.depthMask(true);}
+      const hero=game.state==='menu'?3:1;let alpha=p.invincible>0&&Math.sin(time*32)>0?.35:1;
+      this.draw('ship',[p.x,.35,p.z],[.7*hero,.7*hero,.7*hero],[.72,.83,.9],0,.1,alpha,-p.bank*.35);
+      this.draw('octa',[p.x,.35+.27*hero,p.z+.13*hero],[.22*hero,.12*hero,.4*hero],[.12,.83,1],0,1,alpha);
+      for(let x of [-.42,.42]){this.draw('cube',[p.x+x*hero,.35-.12*hero,p.z-.7*hero],[.1*hero,.1*hero,.24*hero],[.07,.15,.2]);this.draw('octa',[p.x+x*hero,.35-.12*hero,p.z-1.15*hero],[.12*hero,.12*hero,(.4+Math.sin(time*45)*.09)*hero],[.15,.75,1],0,1,.8);}
+      if(p.shield>0&&game.state!=='menu'){gl.depthMask(false);this.draw('sphere',[p.x,.35,p.z],[1.1,.75,1.2],[.15,.7,1],0,.5,.11);gl.depthMask(true);}
     }
     for(const e of game.enemies){let color=e.kind==='tank'?[.7,.27,.55]:e.kind==='dart'?[1,.48,.28]:[.5,.48,.9];this.draw(e.kind==='tank'?'octa':'ship',[e.x,.4,e.z],[e.radius,e.radius*.65,e.radius],color,Math.PI,0,1,Math.sin(time*3+e.id)*.2);this.draw('octa',[e.x,.6,e.z-.25],[.15,.15,.25],[1,.3,.3],0,1);}
     if(game.boss){let b=game.boss;const col=b.phase===2?[1,.22,.32]:region.color;this.draw('octa',[b.x,.65,b.z],[2.7,1,2],col,time*.25,.1);for(let side of [-1,1]){this.draw('ship',[b.x+side*2.6,.5,b.z],[1.5,1,1.6],[.28,.24,.36],Math.PI);this.draw('cube',[b.x+side*2.4,.9,b.z-.7],[.2,.18,.65],col,0,1);}this.draw('sphere',[b.x,.9,b.z-.7],[.55,.55,.55],col,time,1);}
