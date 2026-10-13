@@ -364,6 +364,31 @@ export class Game {
             aim + (i - (count - 1) / 2) * 0.105,
             this.level.bulletSpeed * (boss.phase === 2 ? 1.15 : 1),
           );
+        const titan = this.level.number / 5;
+        if (titan === 2) {
+          // Harvester: offset turrets close the gaps between the main fan.
+          for (const side of [-1, 1])
+            for (const spread of [-0.12, 0, 0.12])
+              this.enemyShot(boss.x + side * 2.8, boss.z - 1.5, aim + spread);
+        } else if (titan === 3) {
+          // Seraph: a rotating radial halo has readable spaces between its spokes.
+          for (let i = 0; i < 10; i++)
+            this.enemyShot(
+              boss.x,
+              boss.z,
+              (i * Math.PI) / 5 + boss.age * 0.3,
+              this.level.bulletSpeed * 0.8,
+            );
+        } else if (titan === 4) {
+          // World Eater: alternating flank sweeps on top of the central barrage.
+          const side = boss.attack % 2 ? 1 : -1;
+          for (let i = 0; i < 5; i++)
+            this.enemyShot(
+              boss.x + side * 3.2,
+              boss.z - 1,
+              aim + side * (0.12 + i * 0.09),
+            );
+        }
         boss.attack++;
         if (boss.phase === 2 && boss.attack % 2 === 0) {
           for (let side of [-1, 1])
