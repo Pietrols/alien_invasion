@@ -1,54 +1,137 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#080c16">
-  <meta name="description" content="Void Runner — a 20-sector 3D space combat campaign. Fly, upgrade, and face four colossal bosses.">
-  <title>Space Invasion / Void Runner</title>
-  <link rel="stylesheet" href="web/style.css">
-</head>
-<body>
-<div id="void-runner">
-  <header class="topbar">
-    <a class="brand" href="./" aria-label="Space Invasion home"><span class="monogram">SI<span>↗</span></span><span>SPACE INVASION<small>VOID RUNNER / 3D</small></span></a>
-    <div class="header-center"><span class="status-dot"></span> FLIGHT SYSTEMS ONLINE</div>
-    <nav aria-label="Game controls">
-      <button id="map-btn" class="quiet">SECTOR MAP <span>↗</span></button>
-      <button id="audio-btn" class="icon-button" aria-label="Mute audio" aria-pressed="false">SOUND ON</button>
-      <button id="pause-btn" class="icon-button" aria-label="Pause game" hidden>Ⅱ</button>
-    </nav>
-  </header>
-  <main class="viewport">
-    <canvas id="scene" aria-label="3D combat arena. Use WASD or arrows to fly, Space to fire, Shift to dash, P to pause. Drag to fly on touch screens."></canvas>
-    <div class="vignette" aria-hidden="true"></div>
-    <div class="scene-label"><span class="status-dot"></span><span id="region-label">THE OUTER RIM</span><span class="scene-coordinate">SECTOR <b id="sector-label">01</b> / 20</span></div>
-    <div id="hud" class="hud" hidden>
-      <div class="hud-left"><span class="eyebrow">MISSION SCORE</span><strong id="score">000000</strong><span id="combo">COMBO ×1</span></div>
-      <div class="hud-right"><span class="eyebrow">HULL <b id="hull-value">100</b></span><div class="meter"><i id="hull-bar"></i></div><span class="eyebrow shield-label">SHIELD <b id="shield-value">40</b></span><div class="meter shield"><i id="shield-bar"></i></div></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#080c16" />
+    <meta
+      name="description"
+      content="Void Runner — a 20-sector 3D space combat campaign. Fly, upgrade, and face four colossal bosses."
+    />
+    <title>Space Invasion / Void Runner</title>
+    <link rel="stylesheet" href="web/style.css" />
+  </head>
+  <body>
+    <div id="void-runner">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Space Invasion home"
+          ><span class="monogram">SI<span>↗</span></span
+          ><span>SPACE INVASION<small>VOID RUNNER / 3D</small></span></a
+        >
+        <div class="header-center">
+          <span class="status-dot"></span> FLIGHT SYSTEMS ONLINE
+        </div>
+        <nav aria-label="Game controls">
+          <button id="map-btn" class="quiet">SECTOR MAP <span>↗</span></button>
+          <button
+            id="audio-btn"
+            class="icon-button"
+            aria-label="Mute audio"
+            aria-pressed="false"
+          >
+            SOUND ON
+          </button>
+          <button
+            id="pause-btn"
+            class="icon-button"
+            aria-label="Pause game"
+            hidden
+          >
+            Ⅱ
+          </button>
+        </nav>
+      </header>
+      <main class="viewport">
+        <canvas
+          id="scene"
+          aria-label="3D combat arena. Use WASD or arrows to fly, Space to fire, Shift to dash, P to pause. Drag to fly on touch screens."
+        ></canvas>
+        <div class="vignette" aria-hidden="true"></div>
+        <div class="scene-label">
+          <span class="status-dot"></span
+          ><span id="region-label">THE OUTER RIM</span
+          ><span class="scene-coordinate"
+            >SECTOR <b id="sector-label">01</b> / 20</span
+          >
+        </div>
+        <div id="hud" class="hud" hidden>
+          <div class="hud-left">
+            <span class="eyebrow">MISSION SCORE</span
+            ><strong id="score">000000</strong><span id="combo">COMBO ×1</span>
+          </div>
+          <div class="hud-right">
+            <span class="eyebrow">HULL <b id="hull-value">100</b></span>
+            <div class="meter"><i id="hull-bar"></i></div>
+            <span class="eyebrow shield-label"
+              >SHIELD <b id="shield-value">40</b></span
+            >
+            <div class="meter shield"><i id="shield-bar"></i></div>
+          </div>
+        </div>
+        <div id="boss-hud" class="boss-hud" hidden>
+          <span id="boss-name">THE WARDEN</span
+          ><span id="boss-phase">PHASE I</span>
+          <div class="meter boss-meter"><i id="boss-bar"></i></div>
+        </div>
+        <section id="menu" class="menu-panel">
+          <div class="eyebrow green">A NEW FRONTIER. A DIFFERENT FIGHT.</div>
+          <h1>VOID<br /><span>RUNNER</span><sup>↗</sup></h1>
+          <p>
+            Twenty sectors into the unknown.<br />Four titans in your way. One
+            ship to make it through.
+          </p>
+          <div class="launch-row">
+            <button id="start-btn" class="primary">
+              LAUNCH MISSION <span>↗</span></button
+            ><button id="resume-btn" class="secondary" hidden>CONTINUE</button>
+          </div>
+          <div class="campaign-facts">
+            <div><strong>20</strong><span>SECTORS</span></div>
+            <div><strong>04</strong><span>BOSSES</span></div>
+            <div><strong>3D</strong><span>FREE FLIGHT</span></div>
+          </div>
+          <div class="menu-record">
+            PERSONAL BEST <span id="best">000000</span>
+          </div>
+        </section>
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+        <div id="overlay" class="overlay" hidden>
+          <section
+            id="dialog"
+            class="dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dialog-title"
+          ></section>
+        </div>
+        <div class="flight-strip">
+          <span
+            ><span class="green">●</span>
+            <span id="flight-status">AWAITING PILOT</span></span
+          ><span id="weapon-label">INTERCEPTOR / MK I</span
+          ><span id="dash-label">DASH READY</span>
+        </div>
+      </main>
+      <footer class="bottom-bar">
+        <div class="controls-legend">
+          <span><kbd>W A S D</kbd> FLY</span><span><kbd>SPACE</kbd> FIRE</span
+          ><span><kbd>SHIFT</kbd> DASH</span><span><kbd>P</kbd> PAUSE</span>
+        </div>
+        <div class="footer-actions">
+          <button id="autofire-btn" class="quiet" aria-pressed="true">
+            AUTO FIRE ON</button
+          ><button id="fullscreen-btn" class="quiet">FULLSCREEN ↗</button>
+        </div>
+      </footer>
+      <div class="touch-controls">
+        <span>DRAG THE ARENA TO FLY · AUTO FIRE ON</span
+        ><button id="touch-dash" class="secondary">DASH ↗</button>
+      </div>
+      <noscript>This 3D game needs JavaScript enabled.</noscript>
     </div>
-    <div id="boss-hud" class="boss-hud" hidden><span id="boss-name">THE WARDEN</span><span id="boss-phase">PHASE I</span><div class="meter boss-meter"><i id="boss-bar"></i></div></div>
-    <section id="menu" class="menu-panel">
-      <div class="eyebrow green">A NEW FRONTIER. A DIFFERENT FIGHT.</div>
-      <h1>VOID<br><span>RUNNER</span><sup>↗</sup></h1>
-      <p>Twenty sectors into the unknown.<br>Four titans in your way. One ship to make it through.</p>
-      <div class="launch-row"><button id="start-btn" class="primary">LAUNCH MISSION <span>↗</span></button><button id="resume-btn" class="secondary" hidden>CONTINUE</button></div>
-      <div class="campaign-facts"><div><strong>20</strong><span>SECTORS</span></div><div><strong>04</strong><span>BOSSES</span></div><div><strong>3D</strong><span>FREE FLIGHT</span></div></div>
-      <div class="menu-record">PERSONAL BEST <span id="best">000000</span></div>
-    </section>
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <div id="overlay" class="overlay" hidden>
-      <section id="dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"></section>
-    </div>
-    <div class="flight-strip"><span><span class="green">●</span> <span id="flight-status">AWAITING PILOT</span></span><span id="weapon-label">INTERCEPTOR / MK I</span><span id="dash-label">DASH READY</span></div>
-  </main>
-  <footer class="bottom-bar">
-    <div class="controls-legend"><span><kbd>W A S D</kbd> FLY</span><span><kbd>SPACE</kbd> FIRE</span><span><kbd>SHIFT</kbd> DASH</span><span><kbd>P</kbd> PAUSE</span></div>
-    <div class="footer-actions"><button id="autofire-btn" class="quiet" aria-pressed="true">AUTO FIRE ON</button><button id="fullscreen-btn" class="quiet">FULLSCREEN ↗</button></div>
-  </footer>
-  <div class="touch-controls"><span>DRAG THE ARENA TO FLY · AUTO FIRE ON</span><button id="touch-dash" class="secondary">DASH ↗</button></div>
-  <noscript>This 3D game needs JavaScript enabled.</noscript>
-</div>
-<script type="module" src="web/app.mjs"></script>
-</body>
+    <script type="module" src="web/app.mjs"></script>
+  </body>
 </html>
