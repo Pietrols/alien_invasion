@@ -187,3 +187,40 @@ test("swept collision catches fast shots that cross a target between frames", ()
     false,
   );
 });
+
+test("four bosses have distinct second-phase projectile patterns", () => {
+  const counts = [];
+  for (const level of [5, 10, 15, 20]) {
+    const g = fresh(level);
+    g.wave = g.level.waves;
+    g.spawnBoss();
+    g.boss.hp = g.boss.maxHP / 2;
+    g.boss.fire = 0;
+    g.step(0.01);
+    counts.push(g.bullets.filter((b) => b.enemy).length);
+  }
+  assert.equal(new Set(counts).size, 4);
+});
+
+test("a protected simulation pilot completes all waves and kills every campaign boss", () => {
+  const g = fresh();
+  g.player.invincible = Infinity; // Test fixture isolates progression from human dodging skill.
+  const defeated = [];
+  g.onEvent = (event) => {
+    if (event.type === "kill" && event.boss) defeated.push(g.level.number);
+  };
+  let frames = 0;
+  while (g.state !== "victory" && frames++ < 120000) {
+    if (g.state === "intermission") g.upgrade("weapon");
+    const target =
+      g.boss ||
+      g.enemies
+        .filter((e) => e.z > g.player.z + 1)
+        .sort((a, b) => a.z - b.z)[0];
+    g.step(1 / 60, { fire: true, target: { x: target?.x || 0, z: -4 } });
+  }
+  assert.equal(g.state, "victory");
+  assert.deepEqual(defeated, [5, 10, 15, 20]);
+  assert.ok(g.kills > 150);
+  assert.ok(frames < 120000);
+});
