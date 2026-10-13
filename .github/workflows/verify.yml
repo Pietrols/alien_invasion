@@ -1,0 +1,29 @@
+name: Verify Void Runner
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  gameplay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check JavaScript syntax and gameplay
+        run: |
+          for file in web/*.mjs; do node --check "$file"; done
+          node --test tests/game.test.mjs
+      - name: Check Python launcher and legacy source
+        run: python -m py_compile play.py alien_invasion.py settings.py ship.py
+      - name: Install browser test tooling
+        run: |
+          npm install --no-save playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Check WebGL, controls, persistence and responsive layouts
+        run: node --test tests/browser.mjs
