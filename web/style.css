@@ -200,6 +200,7 @@ h1 span {
 h1 sup {
   position: absolute;
   top: 0;
+  right: -18px;
   font-size: 26px;
   color: var(--lime);
   line-height: 1;
