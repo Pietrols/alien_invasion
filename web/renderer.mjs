@@ -50,7 +50,7 @@ function perspective(aspect) {
     n = 0.1,
     far = 160;
   return new Float32Array([
-    f / aspect,
+    -f / aspect,
     0,
     0,
     0,
